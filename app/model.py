@@ -50,6 +50,26 @@ def train_model(model, x_train, y_train, x_val, y_val, epochs=50, batch_size=32)
 
     return history
 
+def plot_training_history(history):
+    fig, (ax1,ax2) = plt.subplots(1,2, figsize=(12,4))
+
+    ax1.plot(history.history['accuracy'], label='Training accuracy')
+    ax1.plot(history.history['val_accuracy'], label='Validation accuracy')
+    ax1.set_title('Model Accuracy')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Accuracy')
+    ax1.legend()
+
+    ax2.plot(history.history['loss'], label='Training loss')
+    ax2.plot(history.history['val_loss'], label='Validation loss')
+    ax2.set_title('Model Loss')
+    ax2.set_xlabel('Epoch')
+    ax2.set_ylabel('loss')
+    ax2.legend()
+
+    plt.tight_layout()
+    plt.show()
+
 def evaluate_model(model, x_test, y_test):
     loss, accuracy = model.evaluate(x_test, y_test, verbose=0)
     print(f"\nTest Loss: {loss:.4f}")
@@ -72,6 +92,8 @@ if __name__ == "__main__":
 
     model = create_model(input_dim=x_train.shape[1])
     history = train_model(model, x_train, y_train, x_val, y_val)
+
+    plot_training_history(history)
 
     evaluate_model(model, x_test, y_test)
 
