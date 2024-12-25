@@ -105,6 +105,13 @@ def load_and_preprocess_data(file_path):
     fights_df['main_stance_encoded'] = le.fit_transform(fights_df['main_stance'].fillna('Unknown'))
     fights_df['opponent_stance_encoded'] = le.fit_transform(fights_df['opponent_stance'].fillna('Unknown'))
 
+    fights_df['strike_differential'] = (fights_df['main_strikes_landed_pm'] - fights_df['main_strikes_absorbed_pm']) - (fights_df['opponent_strikes_landed_pm'] - fights_df['opponent_strikes_absorbed_pm'])
+    fights_df['striking_efficiency'] = (fights_df['main_strikes_accuracy'] * fights_df['main_strikes_defended']) - (fights_df['opponent_strikes_accuracy'] * fights_df['opponent_strikes_defended'])
+    fights_df['grappling_advantage'] = (fights_df['main_takedown_accuracy'] * fights_df['main_takedown_defence']) - (fights_df['opponent_takedown_accuracy'] * fights_df['opponent_takedown_defence'])
+
+    fights_df['aggressive_score'] = (fights_df['main_strikes_landed_pm'] + fights_df['main_takedown_avg'] * 5 + fights_df['main_submission_attempts'] * 3)
+    fights_df['defensive_score'] = (fights_df['main_strikes_defended'] + fights_df['main_takedown_defence'])
+
     return fights_df
 
 
@@ -122,7 +129,12 @@ def prepare_model_data(df):
         'main_takedown_defence', 'opponent_takedown_defence',
         'main_submission_attempts', 'opponent_submission_attempts',
         'weight_class_encoded',
-        'main_stance_encoded', 'opponent_stance_encoded'
+        'main_stance_encoded', 'opponent_stance_encoded',
+        'strike_differential',
+        'striking_efficiency',
+        'grappling_advantage',
+        'aggressive_score',
+        'defensive_score'
     ]
 
     df[features] = df[features].fillna(df[features].mean())
