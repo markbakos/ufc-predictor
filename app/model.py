@@ -1,28 +1,40 @@
 from tabnanny import verbose
-
+import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from keras import layers , models, callbacks
+from keras import layers , models, callbacks, regularizers, optimizers
 
 from sklearn.metrics import classification_report, confusion_matrix
 
 def create_model(input_dim):
 
-    model = models.Sequential([
-        layers.Input(shape=(input_dim,)),
+    inputs = layers.Input(shape=(input_dim,))
 
-        layers.Dense(64, activation='relu'),
-        layers.Dropout(0.2),
+    x = layers.Dense(128, activation='relu', kernel_regularizer=regularizers.l2(0.01))(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
 
-        layers.Dense(32, activation='relu'),
-        layers.Dropout(0.2),
+    input_tensor = x
+    x = layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.01))(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.2)(x)
+    input_tensor = layers.Dense(64)(input_tensor)
+    x = layers.Add()([x, input_tensor])
+    x = layers.Activation('relu')(x)
 
-        layers.Dense(16, activation='relu'),
-        layers.Dropout(0.1),
+    input_tensor = x
+    x = layers.Dense(32, activation='relu', kernel_regularizer=regularizers.l2(0.01))(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.2)(x)
+    input_tensor = layers.Dense(32)(input_tensor)
+    x = layers.Add()([x, input_tensor])
+    x = layers.Activation('relu')(x)
 
-        layers.Dense(1, activation='sigmoid')
-    ])
+    outputs = layers.Dense(1, activation='sigmoid')(x)
 
+    model = models.Model(inputs=inputs, outputs=outputs)
+
+    optimizer = optimizers.Adam(learning_rate=0.001)
     model.compile(
         optimizer='adam',
         loss='binary_crossentropy',
@@ -31,20 +43,36 @@ def create_model(input_dim):
 
     return model
 
-def train_model(model, x_train, y_train, x_val, y_val, epochs=50, batch_size=32):
+def train_model(model, x_train, y_train, x_val, y_val, epochs=100, batch_size=64):
 
-    early_stopping = callbacks.EarlyStopping(
+    def lr_schedule(epoch):
+        initial_lr = 0.001
+        drop = 0.5
+        epochs_drop = 10.0
+        lr = initial_lr * np.power(drop, np.floor((1+epoch)/epochs_drop))
+        return lr
+
+    callbacks_list = [
+        callbacks.EarlyStopping(
         monitor='val_loss',
-        patience=10,
+        patience=15,
         restore_best_weights=True
-    )
+        ),
+        callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.5,
+            patience=5,
+            min_lr=0.00001
+        ),
+        callbacks.LearningRateScheduler(lr_schedule)
+    ]
 
     history = model.fit(
         x_train, y_train,
         validation_data=(x_val,y_val),
         epochs=epochs,
         batch_size=batch_size,
-        callbacks=[early_stopping],
+        callbacks=callbacks_list,
         verbose=1
     )
 
