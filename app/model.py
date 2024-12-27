@@ -39,7 +39,7 @@ def create_model(input_dim):
 
     optimizer = optimizers.Adam(learning_rate=0.001)
     model.compile(
-        optimizer='adam',
+        optimizer=optimizer,
         loss='binary_crossentropy',
         metrics=['accuracy']
     )
