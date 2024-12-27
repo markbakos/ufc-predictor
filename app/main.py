@@ -153,7 +153,7 @@ def prepare_model_data(df):
     return x_train, x_val, x_test, y_train, y_val, y_test, scaler, features
 
 if __name__ == "__main__":
-    fights_df = load_and_preprocess_data("../data/complete_ufc_data.csv")
+    fights_df = load_and_preprocess_data("data/complete_ufc_data.csv")
 
     x_train, x_val, x_test, y_train, y_val, y_test, scaler, features = prepare_model_data(fights_df)
     print("Training set shape: ", x_train.shape)

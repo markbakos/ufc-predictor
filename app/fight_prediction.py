@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     model, scaler, features = load_model()
 
-    fighter_stats = FighterStats("../data/complete_ufc_data.csv")
+    fighter_stats = FighterStats("data/complete_ufc_data.csv")
 
     fighter2 = "Shavkat Rakhmonov"
     fighter1 = "Belal Muhammad"

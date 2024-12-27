@@ -1,5 +1,5 @@
 from tabnanny import verbose
-
+from pathlib import Path
 import keras
 import numpy as np
 import tensorflow as tf
@@ -95,7 +95,8 @@ def save_model(model, scaler, features, model_dir="models", version="v1"):
 
 
 def load_model(model_dir="models", version="v1"):
-    model_dir = Path(model_dir)
+    script_dir = Path(__file__).parent
+    model_dir = script_dir / model_dir
 
     model_path = model_dir / f"ufc_model_{version}.keras"
     model = keras.models.load_model(model_path)
@@ -142,7 +143,7 @@ def evaluate_model(model, x_test, y_test):
 if __name__ == "__main__":
     from main import load_and_preprocess_data, prepare_model_data
 
-    fights_df = load_and_preprocess_data("../data/complete_ufc_data.csv")
+    fights_df = load_and_preprocess_data("data/complete_ufc_data.csv")
     x_train, x_val, x_test, y_train, y_val, y_test, scaler, features = prepare_model_data(fights_df)
 
     model = create_model(input_dim=x_train.shape[1])
