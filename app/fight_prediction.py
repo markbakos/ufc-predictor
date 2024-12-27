@@ -65,13 +65,13 @@ class FighterStats:
 
         return fighter_data
 
-    def prepare_prediction_data(self, fighter1_name: str, fighter2_name: str) -> Optional[np.ndarray]:
+    def prepare_prediction_data(self, fighter1_name: str, fighter2_name: str) -> tuple[Optional[np.ndarray], Optional[Dict]]:
 
         fighter1_stats = self.get_fighter_stats(fighter1_name)
         fighter2_stats = self.get_fighter_stats(fighter2_name)
 
         if not fighter1_stats or not fighter2_stats:
-            return None
+            return None, None
 
         current_date = datetime.now()
         fighter1_age = (current_date - pd.to_datetime(fighter1_stats['dob'])).days / 365.25
@@ -82,13 +82,21 @@ class FighterStats:
         weight_advantage = fighter1_stats['weight'] - fighter2_stats['weight']
 
         strike_differential = (fighter1_stats['strikes_landed_pm'] - fighter1_stats['strikes_absorbed_pm']) - (fighter2_stats['strikes_landed_pm'] - fighter2_stats['strikes_absorbed_pm'])
+        strikes_landed_advantage = fighter1_stats['strikes_landed_pm'] - fighter2_stats['strikes_landed_pm']
+        strikes_absorbed_advantage = fighter2_stats['strikes_absorbed_pm'] - fighter1_stats['strikes_absorbed_pm']
+        striking_accuracy_advantage = fighter1_stats['strikes_accuracy'] - fighter2_stats['strikes_accuracy']
+        striking_defense_advantage = fighter1_stats['strikes_defended'] - fighter2_stats['strikes_defended']
 
         striking_efficiency = (fighter1_stats['strikes_accuracy'] * fighter1_stats['strikes_defended']) - (fighter2_stats['strikes_accuracy'] * fighter2_stats['strikes_defended'])
 
+        takedown_advantage = fighter1_stats['takedown_avg'] - fighter2_stats['takedown_avg']
+        takedown_accuracy_advantage = fighter1_stats['takedown_accuracy'] - fighter2_stats['takedown_accuracy']
+        takedown_defense_advantage = fighter1_stats['takedown_defence'] - fighter2_stats['takedown_defence']
+
         grappling_advantage = (fighter1_stats['takedown_accuracy'] * fighter1_stats['takedown_defence']) - (fighter2_stats['takedown_accuracy'] * fighter2_stats['takedown_defence'])
+        submission_advantage = fighter1_stats['submission_attempts'] - fighter2_stats['submission_attempts']
 
         aggressive_score = (fighter1_stats['strikes_landed_pm'] + fighter1_stats['takedown_avg'] * 5 + fighter1_stats['submission_attempts'] * 3)
-
         defensive_score = (fighter1_stats['strikes_defended'] + fighter1_stats['takedown_defence'])
 
         stance1_encoded = self.stance_encoder.transform([fighter1_stats['stance'] or 'Unknown'])[0]
@@ -114,11 +122,55 @@ class FighterStats:
             defensive_score
         ]
 
-        return np.array(features).reshape(1, -1)
+        advantages = {
+            'physical': {
+                'height': height_advantage,
+                'reach': reach_advantage,
+                'weight': weight_advantage,
+                'age': fighter2_age - fighter1_age
+            },
+            'striking': {
+                'differential': strike_differential,
+                'landed_per_min': strikes_landed_advantage,
+                'absorbed_per_min': strikes_absorbed_advantage,
+                'accuracy': striking_accuracy_advantage,
+                'defense': striking_defense_advantage,
+                'efficiency': striking_efficiency
+            },
+            'grappling': {
+                'takedowns_per_15min': takedown_advantage,
+                'takedown_accuracy': takedown_accuracy_advantage,
+                'takedown_defense': takedown_defense_advantage,
+                'overall_grappling': grappling_advantage,
+                'submission_attempts_per_15min': submission_advantage
+            },
+            'general': {
+                'aggression': aggressive_score,
+                'defense': defensive_score
+            }
+        }
 
-def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str, fighter2_name: str) -> tuple[str, float]:
+        return np.array(features).reshape(1, -1), advantages
 
-    prediction_data = fighter_stats.prepare_prediction_data(fighter1_name, fighter2_name)
+
+def analyze_prediction_factors(advantages: Dict, prediction: float) -> Dict[str, float]:
+    multiplier = 1 if prediction > 0.5 else -1
+
+    explanations = {}
+
+    for category, metrics in advantages.items():
+        for metric_name, value in metrics.items():
+            adjusted_value = value * multiplier
+
+            if abs(adjusted_value) > 0.01:
+                explanations[f"{category}_{metric_name}"] = round(adjusted_value, 3)
+
+    return explanations
+
+
+def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str, fighter2_name: str) -> tuple[str, float, Dict[str, float]]:
+
+    prediction_data, advantages = fighter_stats.prepare_prediction_data(fighter1_name, fighter2_name)
 
     if prediction_data is None:
         raise ValueError("Could not find data for one or both fighters.")
@@ -129,7 +181,10 @@ def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str
 
     winner = fighter1_name if prediction > 0.5 else fighter2_name
     confidence = prediction if prediction > 0.5 else 1 - prediction
-    return winner, float(confidence)
+
+    advantage_factors = analyze_prediction_factors(advantages, prediction)
+
+    return winner, float(confidence), advantage_factors
 
 if __name__ == "__main__":
     from model import load_model
@@ -138,11 +193,16 @@ if __name__ == "__main__":
 
     fighter_stats = FighterStats("../data/complete_ufc_data.csv")
 
-    fighter2 = "Jon Jones"
-    fighter1 = "Mario Bautista"
+    fighter2 = "Shavkat Rakhmonov"
+    fighter1 = "Belal Muhammad"
 
     try:
-        winner, confidence = predict_fight(model, scaler, fighter_stats, fighter1, fighter2)
+        winner, confidence, advantages = predict_fight(model, scaler, fighter_stats, fighter1, fighter2)
         print(f"Winner: {winner}\nConfidence: {confidence}")
+
+        print("\nAdvantage Breakdown:")
+        for factor, value in advantages.items():
+            print(f"- {factor}: {value}")
+
     except ValueError as e:
         print(f"Error: {e}")
