@@ -2,14 +2,10 @@ import numpy as np
 import pandas as pd
 from typing import Optional, Dict
 from datetime import datetime
-
 from sklearn.preprocessing import LabelEncoder
 
-
 class FighterStats:
-
     def __init__(self, file_path: str):
-
         self.df = pd.read_csv(file_path)
 
         self.df['event_date'] = pd.to_datetime(self.df['event_date'])
@@ -120,7 +116,6 @@ class FighterStats:
 
         return np.array(features).reshape(1, -1)
 
-
 def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str, fighter2_name: str) -> tuple[str, float]:
 
     prediction_data = fighter_stats.prepare_prediction_data(fighter1_name, fighter2_name)
@@ -134,28 +129,20 @@ def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str
 
     winner = fighter1_name if prediction > 0.5 else fighter2_name
     confidence = prediction if prediction > 0.5 else 1 - prediction
-
     return winner, float(confidence)
 
 if __name__ == "__main__":
+    from model import load_model
 
-    from main import load_and_preprocess_data, prepare_model_data
-    from model import create_model, train_model
-
-    fights_df = load_and_preprocess_data("../data/complete_ufc_data.csv")
-    x_train, x_val, x_test, y_train, y_val, y_test, scaler, features = prepare_model_data(fights_df)
-
-    model = create_model(input_dim=x_train.shape[1])
-    history = train_model(model, x_train, y_train, x_val, y_val)
+    model, scaler, features = load_model()
 
     fighter_stats = FighterStats("../data/complete_ufc_data.csv")
 
-    fighter1 = "Tom Aspinall"
     fighter2 = "Jon Jones"
+    fighter1 = "Mario Bautista"
 
     try:
         winner, confidence = predict_fight(model, scaler, fighter_stats, fighter1, fighter2)
-        print(f"Predicted Winner: {winner}")
-        print(f"Confidence: {confidence*100:.2f}%")
+        print(f"Winner: {winner}\nConfidence: {confidence}")
     except ValueError as e:
         print(f"Error: {e}")

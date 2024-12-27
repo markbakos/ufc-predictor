@@ -1,9 +1,12 @@
 from tabnanny import verbose
+
+import keras
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from keras import layers , models, callbacks, regularizers, optimizers
-
+import joblib
+from pathlib import Path
 from sklearn.metrics import classification_report, confusion_matrix
 
 def create_model(input_dim):
@@ -78,6 +81,30 @@ def train_model(model, x_train, y_train, x_val, y_val, epochs=100, batch_size=64
 
     return history
 
+def save_model(model, scaler, features, model_dir="models", version="v1"):
+    model_dir = Path(model_dir)
+    model_dir.mkdir(exist_ok=True)
+
+    model_path = model_dir / f"ufc_model_{version}.keras"
+    model.save(model_path)
+
+    joblib.dump(scaler, model_dir / f"scaler_{version}.joblib")
+    joblib.dump(features, model_dir / f"features_{version}.joblib")
+
+    print(f"Model and components saved to {model_dir}")
+
+
+def load_model(model_dir="models", version="v1"):
+    model_dir = Path(model_dir)
+
+    model_path = model_dir / f"ufc_model_{version}.keras"
+    model = keras.models.load_model(model_path)
+
+    scaler = joblib.load(model_dir / f"scaler_{version}.joblib")
+    features = joblib.load(model_dir / f"features_{version}.joblib")
+
+    return model, scaler, features
+
 def plot_training_history(history):
     fig, (ax1,ax2) = plt.subplots(1,2, figsize=(12,4))
 
@@ -123,6 +150,7 @@ if __name__ == "__main__":
 
     plot_training_history(history)
 
+    save_model(model, scaler, features)
     evaluate_model(model, x_test, y_test)
 
 
