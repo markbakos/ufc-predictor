@@ -109,8 +109,9 @@ def load_and_preprocess_data(file_path):
     fights_df['striking_efficiency'] = (fights_df['main_strikes_accuracy'] * fights_df['main_strikes_defended']) - (fights_df['opponent_strikes_accuracy'] * fights_df['opponent_strikes_defended'])
     fights_df['grappling_advantage'] = (fights_df['main_takedown_accuracy'] * fights_df['main_takedown_defence']) - (fights_df['opponent_takedown_accuracy'] * fights_df['opponent_takedown_defence'])
 
-    fights_df['aggressive_score'] = (fights_df['main_strikes_landed_pm'] + fights_df['main_takedown_avg'] * 5 + fights_df['main_submission_attempts'] * 3)
-    fights_df['defensive_score'] = (fights_df['main_strikes_defended'] + fights_df['main_takedown_defence'])
+    fights_df['aggressive_score'] = ((fights_df['main_strikes_landed_pm'] + fights_df['main_takedown_avg'] * 5 + fights_df['main_submission_attempts'] * 3) -
+                                     (fights_df['opponent_strikes_landed_pm'] + fights_df['opponent_takedown_avg'] * 5 + fights_df['opponent_submission_attempts'] * 3))
+    fights_df['defensive_score'] = (fights_df['main_strikes_defended'] + fights_df['main_takedown_defence']) - (fights_df['opponent_strikes_defended'] + fights_df['opponent_takedown_defence'])
 
     return fights_df
 

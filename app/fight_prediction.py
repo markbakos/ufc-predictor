@@ -96,8 +96,10 @@ class FighterStats:
         grappling_advantage = (fighter1_stats['takedown_accuracy'] * fighter1_stats['takedown_defence']) - (fighter2_stats['takedown_accuracy'] * fighter2_stats['takedown_defence'])
         submission_advantage = fighter1_stats['submission_attempts'] - fighter2_stats['submission_attempts']
 
-        aggressive_score = (fighter1_stats['strikes_landed_pm'] + fighter1_stats['takedown_avg'] * 5 + fighter1_stats['submission_attempts'] * 3)
-        defensive_score = (fighter1_stats['strikes_defended'] + fighter1_stats['takedown_defence'])
+        aggressive_score = ((fighter1_stats['strikes_landed_pm'] + fighter1_stats['takedown_avg'] * 5 + fighter1_stats['submission_attempts'] * 3) -
+                            (fighter2_stats['strikes_landed_pm'] + fighter2_stats['takedown_avg'] * 5 + fighter2_stats['submission_attempts'] * 3))
+
+        defensive_score = (fighter1_stats['strikes_defended'] + fighter1_stats['takedown_defence']) - (fighter2_stats['strikes_defended'] + fighter2_stats['takedown_defence'])
 
         stance1_encoded = self.stance_encoder.transform([fighter1_stats['stance'] or 'Unknown'])[0]
         stance2_encoded = self.stance_encoder.transform([fighter2_stats['stance'] or 'Unknown'])[0]
