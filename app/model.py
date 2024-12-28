@@ -1,5 +1,6 @@
 from tabnanny import verbose
 from pathlib import Path
+import seaborn as sb
 import keras
 import numpy as np
 import tensorflow as tf
@@ -125,6 +126,17 @@ def plot_training_history(history):
 
     plt.tight_layout()
     plt.show()
+
+    y_pred = (model.predict(x_test) > 0.5).astype(int)
+    matrix = confusion_matrix(y_test, y_pred)
+
+    plt.figure(figsize=(6,5))
+    sb.heatmap(matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Predicted Negative', 'Predicted Positive'], yticklabels=['True Negative', 'True Positive'])
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.show()
+
 
 def evaluate_model(model, x_test, y_test):
     loss, accuracy = model.evaluate(x_test, y_test, verbose=0)
