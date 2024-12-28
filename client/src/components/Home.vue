@@ -57,7 +57,7 @@ const predictFight = async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 p-6">
-    <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden">
+    <div class="w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden bg-gray-300">
       <div class="p-8">
         <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Predict Fight</h1>
         <div class="flex flex-col md:flex-row justify-between space-y-6 md:space-y-0 md:space-x-6">
@@ -91,7 +91,7 @@ const predictFight = async () => {
           </button>
         </div>
       </div>
-      <div v-if="predictionResult" class="p-8 bg-gray-100">
+      <div v-if="predictionResult" class="p-8">
         <Prediction
             :winner="predictionResult.winner"
             :confidence="predictionResult.confidence"
