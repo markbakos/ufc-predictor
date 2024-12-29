@@ -21,12 +21,47 @@ class FighterStats:
         ]).fillna('Unknown').unique()
         self.stance_encoder.fit(all_stances)
 
+    def get_fighter_win_stats(self, fighter_name: str) -> tuple[float, int]:
+        fighter1_matches = self.df[self.df['fighter1'] == fighter_name].copy()
+        fighter2_matches = self.df[self.df['fighter2'] == fighter_name].copy()
+
+        all_fights = pd.concat([
+            fighter1_matches[['event_date', 'fighter1', 'fighter2', 'outcome']],
+            fighter2_matches[['event_date', 'fighter1', 'fighter2', 'outcome']]
+        ]).sort_values('event_date')
+
+        if all_fights.empty:
+            return 0.0, 0
+
+        total_fights = len(all_fights)
+        wins = 0
+        current_streak = 0
+
+        for _, fight in all_fights.iterrows():
+            is_fighter1 = fight['fighter1'] == fighter_name
+            outcome = fight['outcome']
+
+            won = (is_fighter1 and outcome == 'fighter1') or (not is_fighter1 and outcome == 'fighter2')
+
+            if won:
+                wins+=1
+                current_streak = current_streak + 1 if current_streak >= 0 else 1
+            else:
+                current_streak = -1 if current_streak > 0 else current_streak - 1
+
+        win_rate = wins / total_fights if total_fights > 0 else 0
+        win_streak = max(0, current_streak)
+
+        return win_rate, win_streak
+
+
     def get_fighter_stats(self, fighter_name: str) -> Optional[Dict]:
 
         fighter_data = None
 
         f1_data = self.df[self.df['fighter1'] == fighter_name].sort_values('event_date', ascending=False)
         if not f1_data.empty:
+            win_rate, win_streak = self.get_fighter_win_stats(fighter_name)
             fighter_data = {
                 'height': f1_data.iloc[0]['fighter1_height'],
                 'weight': f1_data.iloc[0]['fighter1_curr_weight'],
@@ -41,11 +76,14 @@ class FighterStats:
                 'takedown_defence': f1_data.iloc[0]['fighter1_takedown_defence'],
                 'submission_attempts': f1_data.iloc[0]['fighter1_submission_avg_attempted_per15m'],
                 'dob': f1_data.iloc[0]['fighter1_dob'],
-                'weight_class': f1_data.iloc[0]['weight_class']
+                'weight_class': f1_data.iloc[0]['weight_class'],
+                'win_rate': win_rate,
+                'win_streak': win_streak
             }
         else:
             f2_data = self.df[self.df['fighter2'] == fighter_name].sort_values('event_date', ascending=False)
             if not f2_data.empty:
+                win_rate, win_streak = self.get_fighter_win_stats(fighter_name)
                 fighter_data = {
                     'height': f1_data.iloc[0]['fighter2_height'],
                     'weight': f1_data.iloc[0]['fighter2_curr_weight'],
@@ -60,7 +98,9 @@ class FighterStats:
                     'takedown_defence': f1_data.iloc[0]['fighter2_takedown_defence'],
                     'submission_attempts': f1_data.iloc[0]['fighter2_submission_avg_attempted_per15m'],
                     'dob': f1_data.iloc[0]['fighter2_dob'],
-                    'weight_class': f1_data.iloc[0]['weight_class']
+                    'weight_class': f1_data.iloc[0]['weight_class'],
+                    'win_rate': win_rate,
+                    'win_streak': win_streak
                 }
 
         return fighter_data
@@ -80,6 +120,9 @@ class FighterStats:
         height_advantage = fighter1_stats['height'] - fighter2_stats['height']
         reach_advantage = fighter1_stats['reach'] - fighter2_stats['reach']
         weight_advantage = fighter1_stats['weight'] - fighter2_stats['weight']
+
+        win_rate_advantage = fighter1_stats['win_rate'] - fighter2_stats['win_rate']
+        win_streak_advantage = fighter1_stats['win_streak'] - fighter2_stats['win_streak']
 
         strike_differential = (fighter1_stats['strikes_landed_pm'] - fighter1_stats['strikes_absorbed_pm']) - (fighter2_stats['strikes_landed_pm'] - fighter2_stats['strikes_absorbed_pm'])
         strikes_landed_advantage = fighter1_stats['strikes_landed_pm'] - fighter2_stats['strikes_landed_pm']
@@ -101,6 +144,8 @@ class FighterStats:
 
         defensive_score = (fighter1_stats['strikes_defended'] + fighter1_stats['takedown_defence']) - (fighter2_stats['strikes_defended'] + fighter2_stats['takedown_defence'])
 
+        momentum_score = (fighter1_stats['win_rate'] * 0.7 + fighter1_stats['win_streak'] * 0.3) - (fighter2_stats['win_rate'] * 0.7 + fighter2_stats['win_streak'] * 0.3)
+
         stance1_encoded = self.stance_encoder.transform([fighter1_stats['stance'] or 'Unknown'])[0]
         stance2_encoded = self.stance_encoder.transform([fighter2_stats['stance'] or 'Unknown'])[0]
 
@@ -121,7 +166,10 @@ class FighterStats:
             striking_efficiency,
             grappling_advantage,
             aggressive_score,
-            defensive_score
+            defensive_score,
+            win_rate_advantage,
+            win_streak_advantage,
+            momentum_score
         ]
 
         advantages = {
@@ -149,6 +197,11 @@ class FighterStats:
             'general': {
                 'aggression': aggressive_score,
                 'defense': defensive_score
+            },
+            'performance': {
+                'win_rate': win_rate_advantage,
+                'win_streak': win_streak_advantage,
+                'momentum': momentum_score
             }
         }
 
@@ -196,7 +249,7 @@ if __name__ == "__main__":
     fighter_stats = FighterStats("data/complete_ufc_data.csv")
 
     fighter2 = "Shavkat Rakhmonov"
-    fighter1 = "Belal Muhammad"
+    fighter1 = "Israel Adesanya"
 
     try:
         winner, confidence, advantages = predict_fight(model, scaler, fighter_stats, fighter1, fighter2)

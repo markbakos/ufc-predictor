@@ -82,7 +82,7 @@ def train_model(model, x_train, y_train, x_val, y_val, epochs=100, batch_size=64
 
     return history
 
-def save_model(model, scaler, features, model_dir="models", version="v1"):
+def save_model(model, scaler, features, model_dir="models", version="v1.1"):
     model_dir = Path(model_dir)
     model_dir.mkdir(exist_ok=True)
 
@@ -95,7 +95,7 @@ def save_model(model, scaler, features, model_dir="models", version="v1"):
     print(f"Model and components saved to {model_dir}")
 
 
-def load_model(model_dir="models", version="v1"):
+def load_model(model_dir="models", version="v1.1"):
     script_dir = Path(__file__).parent
     model_dir = script_dir / model_dir
 
