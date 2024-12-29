@@ -34,55 +34,6 @@ def calculate_fighter_win_stats(df, fighter_name, fight_date):
 
     return win_rate, win_streak
 
-def calculate_betting_history(df, fighter_name, fight_date):
-    fighter1_matches = df[(df['fighter1'] == fighter_name) & (df['event_date'] < fight_date)].copy()
-    fighter2_matches = df[(df['fighter2'] == fighter_name) & (df['event_date'] < fight_date)].copy()
-
-    total_as_favorite = 0
-    wins_as_favorite = 0
-    total_as_underdog = 0
-    wins_as_underdog = 0
-
-    for _, fight in fighter1_matches.iterrows():
-        if pd.isna(fight['favourite']):
-            continue
-
-        is_favorite = fight['favourite'] == fighter_name
-        won = fight['outcome'] == 'fighter1'
-
-        if is_favorite:
-            total_as_favorite += 1
-            if won:
-                wins_as_favorite += 1
-
-        else:
-            total_as_underdog += 1
-            if won:
-                wins_as_underdog += 1
-
-    for _, fight in fighter2_matches.iterrows():
-        if pd.isna(fight['favourite']):
-            continue
-
-        is_favorite = fight['favourite'] == fighter_name
-        won = fight['outcome'] == 'fighter2'
-
-        if is_favorite:
-            total_as_favorite += 1
-            if won:
-                wins_as_favorite += 1
-
-        else:
-            total_as_underdog += 1
-            if won:
-                wins_as_underdog += 1
-
-    fav_win_rate = wins_as_favorite / total_as_favorite if total_as_favorite > 0 else 0.5
-    underdog_win_rate = wins_as_underdog / total_as_underdog if total_as_underdog > 0 else 0.5
-
-    return fav_win_rate, underdog_win_rate
-
-
 def load_and_preprocess_data(file_path):
     df = pd.read_csv(file_path)
 
@@ -102,12 +53,6 @@ def load_and_preprocess_data(file_path):
 
         f1_momentum = f1_win_rate * 0.7 + f1_streak * 0.3
         f2_momentum = f2_win_rate * 0.7 + f2_streak * 0.3
-
-        f1_fav_rate, f1_dog_rate = calculate_betting_history(df, fight['fighter1'], fight['event_date'])
-        f2_fav_rate, f2_dog_rate = calculate_betting_history(df, fight['fighter2'], fight['event_date'])
-
-        f1_betting_score = f1_fav_rate + f1_dog_rate
-        f2_betting_score = f2_fav_rate + f2_dog_rate
 
         fight1 = {
             'event_date': fight['event_date'],
@@ -130,7 +75,6 @@ def load_and_preprocess_data(file_path):
             'main_win_rate': f1_win_rate,
             'main_win_streak': f1_streak,
             'main_momentum': f1_momentum,
-            'main_betting_score': f1_betting_score,
 
             'opponent': fight['fighter2'],
             'opponent_height': fight['fighter2_height'],
@@ -149,7 +93,6 @@ def load_and_preprocess_data(file_path):
             'opponent_win_rate': f2_win_rate,
             'opponent_win_streak': f2_streak,
             'opponent_momentum': f2_momentum,
-            'opponent_betting_score': f2_betting_score,
 
             'win': 1
         }
@@ -175,7 +118,6 @@ def load_and_preprocess_data(file_path):
             'main_win_rate': f2_win_rate,
             'main_win_streak': f2_streak,
             'main_momentum': f2_momentum,
-            'main_betting_score': f2_betting_score,
 
             'opponent': fight['fighter1'],
             'opponent_height': fight['fighter1_height'],
@@ -194,7 +136,6 @@ def load_and_preprocess_data(file_path):
             'opponent_win_rate': f1_win_rate,
             'opponent_win_streak': f1_streak,
             'opponent_momentum': f1_momentum,
-            'opponent_betting_score': f1_betting_score,
 
             'win': 0
         }
@@ -211,8 +152,6 @@ def load_and_preprocess_data(file_path):
     fights_df['win_rate_advantage'] = fights_df['main_win_rate'] - fights_df['opponent_win_rate']
     fights_df['win_streak_advantage'] = fights_df['main_win_streak'] - fights_df['opponent_win_streak']
     fights_df['momentum_advantage'] = fights_df['main_momentum'] - fights_df['opponent_momentum']
-
-    fights_df['betting_history_advantage'] = fights_df['main_betting_score'] - fights_df['opponent_betting_score']
 
     le = LabelEncoder()
     fights_df['weight_class_encoded'] = le.fit_transform(fights_df['weight_class'])
@@ -253,7 +192,6 @@ def prepare_model_data(df):
         'win_rate_advantage',
         'win_streak_advantage',
         'momentum_advantage',
-        'betting_history_advantage',
     ]
 
     df[features] = df[features].fillna(df[features].mean())

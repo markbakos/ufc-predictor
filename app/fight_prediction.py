@@ -54,53 +54,6 @@ class FighterStats:
 
         return win_rate, win_streak
 
-    def get_betting_history(self, fighter_name: str) -> tuple[float, float]:
-        fighter1_matches = self.df[self.df['fighter1'] == fighter_name].copy()
-        fighter2_matches = self.df[self.df['fighter2'] == fighter_name].copy()
-
-        total_as_favorite = 0
-        wins_as_favorite = 0
-        total_as_underdog = 0
-        wins_as_underdog = 0
-
-        for _, fight in fighter1_matches.iterrows():
-            if pd.isna(fight['favourite']):
-                continue
-
-            is_favorite = fight['favourite'] == fighter_name
-            won = fight['outcome'] == 'fighter1'
-
-            if is_favorite:
-                total_as_favorite += 1
-                if won:
-                    wins_as_favorite += 1
-
-            else:
-                total_as_underdog += 1
-                if won:
-                    wins_as_underdog += 1
-
-        for _, fight in fighter2_matches.iterrows():
-            if pd.isna(fight['favourite']):
-                continue
-
-            is_favorite = fight['favourite'] == fighter_name
-            won = fight['outcome'] == 'fighter2'
-
-            if is_favorite:
-                total_as_favorite += 1
-                if won:
-                    wins_as_favorite += 1
-
-            else:
-                total_as_underdog += 1
-                if won:
-                    wins_as_underdog += 1
-
-        fav_win_rate = wins_as_favorite / total_as_favorite if total_as_favorite > 0 else 0.5
-        underdog_win_rate = wins_as_underdog / total_as_underdog if total_as_underdog > 0 else 0.5
-
-        return fav_win_rate, underdog_win_rate
 
     def get_fighter_stats(self, fighter_name: str) -> Optional[Dict]:
 
@@ -160,11 +113,6 @@ class FighterStats:
         if not fighter1_stats or not fighter2_stats:
             return None, None
 
-        f1_fav_rate, f1_dog_rate = self.get_betting_history(fighter1_name)
-        f2_fav_rate, f2_dog_rate = self.get_betting_history(fighter2_name)
-
-        betting_performance = (f1_fav_rate + f1_dog_rate) - (f2_fav_rate + f2_dog_rate)
-
         current_date = datetime.now()
         fighter1_age = (current_date - pd.to_datetime(fighter1_stats['dob'])).days / 365.25
         fighter2_age = (current_date - pd.to_datetime(fighter2_stats['dob'])).days / 365.25
@@ -222,7 +170,6 @@ class FighterStats:
             win_rate_advantage,
             win_streak_advantage,
             momentum_score,
-            betting_performance,
         ]
 
         advantages = {
@@ -255,7 +202,6 @@ class FighterStats:
                 'win_rate': win_rate_advantage,
                 'win_streak': win_streak_advantage,
                 'momentum': momentum_score,
-                'betting_history': betting_performance,
             }
         }
 
