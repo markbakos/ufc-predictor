@@ -117,8 +117,7 @@ The current model only compares the fighters' physical and fighting statistics, 
 
 ### Implemented
 
-- ✔️ Fighter's win streaks, win rates and momentum (v1.1)
-<br>
+- ✔️ Fighter's win streaks, win rates and momentum (v1.1) -
 Improved overall accuracy by about ~0.5% - ~0.8%. 
 
 ### Planned
