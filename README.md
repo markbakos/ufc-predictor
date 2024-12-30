@@ -117,12 +117,13 @@ The current model only compares the fighters' physical and fighting statistics, 
 
 ### Implemented
 
-- ✔️ Fighter's win streaks, win rates and momentum (v1.1) -
+- Fighter's win streaks, win rates and momentum (v1.1) ✔️ <br>
 Improved overall accuracy by about ~0.5% - ~0.8%. 
 
 ### Planned
 
-- Checking betting odds
+- ⚠️ Checking betting odds 
+<br>Tried comparing advantage of past favorite/underdog status in fights, that lead to a ~-0.5% decrease in accuracy, have to try a different approach.
 - Categorizing fighters and both checking IF they have fought against someone in that category, and if they did, how they competed
 - Octagon time for fighters
 - Improve the model to include more in the prediction (Predicted time, Outcome of DEC/SUB/KO)
