@@ -22,6 +22,7 @@ class FighterStats:
         self.stance_encoder.fit(all_stances)
 
     def get_fighter_win_stats(self, fighter_name: str) -> tuple[float, int]:
+        """Returns a fighter's current winrate and winstreak"""
         fighter1_matches = self.df[self.df['fighter1'] == fighter_name].copy()
         fighter2_matches = self.df[self.df['fighter2'] == fighter_name].copy()
 
@@ -56,7 +57,7 @@ class FighterStats:
 
 
     def get_fighter_stats(self, fighter_name: str) -> Optional[Dict]:
-
+        """Returns the fighter's stats from the data"""
         fighter_data = None
 
         f1_data = self.df[self.df['fighter1'] == fighter_name].sort_values('event_date', ascending=False)
@@ -106,7 +107,7 @@ class FighterStats:
         return fighter_data
 
     def prepare_prediction_data(self, fighter1_name: str, fighter2_name: str) -> tuple[Optional[np.ndarray], Optional[Dict]]:
-
+        """Calculates the advantages between the 2 given fighter's stats"""
         fighter1_stats = self.get_fighter_stats(fighter1_name)
         fighter2_stats = self.get_fighter_stats(fighter2_name)
 
@@ -224,7 +225,7 @@ def analyze_prediction_factors(advantages: Dict, prediction: float) -> Dict[str,
 
 
 def predict_fight(model, scaler, fighter_stats: FighterStats, fighter1_name: str, fighter2_name: str) -> tuple[str, float, Dict[str, float]]:
-
+    """Uses the model to predict the fight between the 2 given fighters"""
     prediction_data, advantages = fighter_stats.prepare_prediction_data(fighter1_name, fighter2_name)
 
     if prediction_data is None:
