@@ -2,6 +2,11 @@
 
 <img src="https://wakatime.com/badge/user/7a2d5960-3199-4705-8543-83755e2b4d0c/project/27c5d40f-233b-4a88-9484-09663e1e5926.svg" alt="Time spent in project" title="Time spent in project" />
 
+## Improved model and scraper
+
+**This repository is outdated** <br>
+Reworked scraper and prediction model available at new repository [Advanced UFC Analyzer](https://github.com/markbakos/advanced-ufc-analyzer)
+
 ## Table of Contents
 
 + [About](#about)
